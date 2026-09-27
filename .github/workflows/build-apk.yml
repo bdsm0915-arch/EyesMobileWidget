@@ -15,6 +15,18 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
+      - name: Restore source and apply v9.1 icon patch
+        shell: bash
+        run: |
+          curl -L --fail -o EyesMobileWidget-mobile-build.zip "https://raw.githubusercontent.com/bdsm0915-arch/EyesMobileWidget/dfea68586bb09768f1d38972b5d299434c889182/EyesMobileWidget-mobile-build.zip"
+          unzip -o EyesMobileWidget-mobile-build.zip
+          sed -i 's/versionCode = 90/versionCode = 91/' app/build.gradle.kts
+          sed -i 's/versionName = "9.0"/versionName = "9.1"/' app/build.gradle.kts
+          sed -i 's/p.setStrokeWidth(7f);/p.setStrokeWidth(6.5f);/' app/src/main/java/com/example/eyesmobilewidget/GaugeRenderer.java
+          sed -i 's/new RectF(22f, 22f, 106f, 106f)/new RectF(29f, 29f, 99f, 99f)/' app/src/main/java/com/example/eyesmobilewidget/GaugeRenderer.java
+          sed -i 's/float back = 23f;/float back = 22f;/' app/src/main/java/com/example/eyesmobilewidget/GaugeRenderer.java
+          sed -i 's/float half = 12f;/float half = 13f;/' app/src/main/java/com/example/eyesmobilewidget/GaugeRenderer.java
+
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
@@ -30,8 +42,7 @@ jobs:
 
       - name: Ensure Android SDK 34
         shell: bash
-        run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
@@ -47,18 +58,19 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: EyesMobileWidget-v9.0-apk
+          name: EyesMobileWidget-v9.1-apk
           path: ${{ env.APK_NAME }}
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish versioned APK
+      - name: Update stable APK
         shell: bash
         run: |
+          cp "$APK_NAME" EyesMobileWidget-final.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$APK_NAME"
+          git add EyesMobileWidget-final.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish $APK_NAME [skip ci]"
+            git commit -m "Update stable APK to v9.1 [skip ci]"
             git push
           fi
