@@ -17,7 +17,7 @@ jobs:
 
       - name: Extract uploaded build source
         shell: bash
-        run: unzip -o EyesMobileWidget-v9.9-mobile-build.zip
+        run: unzip -o EyesMobileWidget-v10.0-mobile-build.zip
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
