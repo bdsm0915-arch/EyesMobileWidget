@@ -1,9 +1,11 @@
 name: Build EyesMobileWidget APK
 
+
 on:
   workflow_dispatch:
   push:
     branches: [ "main", "master" ]
+
 
 jobs:
   build:
@@ -11,19 +13,23 @@ jobs:
     permissions:
       contents: write
 
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
 
+
       - name: Extract uploaded build source
         shell: bash
-        run: unzip -o EyesMobileWidget-v10.4-mobile-build.zip
+        run: unzip -o EyesMobileWidget-v10.5-mobile-build.zip
+
 
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
+
 
       - name: Set up Gradle 8.2.1
         uses: gradle/actions/setup-gradle@v6
@@ -32,38 +38,6 @@ jobs:
           validate-wrappers: false
           cache-provider: basic
 
+
       - name: Ensure Android SDK 34
         shell: bash
-        run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Build debug APK
-        run: gradle :app:assembleDebug --stacktrace
-
-      - name: Rename APK
-        shell: bash
-        run: |
-          VERSION=$(sed -nE 's/.*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)
-          APK_NAME="EyesMobileWidget-v${VERSION}.apk"
-          cp app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
-          cp app/build/outputs/apk/debug/app-debug.apk EyesMobileWidget-final.apk
-          echo "APK_NAME=$APK_NAME" >> "$GITHUB_ENV"
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: EyesMobileWidget-v10.4-apk
-          path: ${{ env.APK_NAME }}
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Publish APK
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$APK_NAME" EyesMobileWidget-final.apk
-          if ! git diff --cached --quiet; then
-            git commit -m "Publish $APK_NAME [skip ci]"
-            git push
-          fi
